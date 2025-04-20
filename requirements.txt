@@ -1,0 +1,11 @@
+## Libraries required##
+numpy
+Pillow
+gdown
+tqdm
+scikit-learn
+matplotlib
+tensorflow
+joblib
+scikit-image
+streamlit
