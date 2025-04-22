@@ -5,7 +5,7 @@ import tensorflow as tf
 from model_loader import load_models
 
 # Load all models using the cached loader (no Streamlit UI in this file)
-svm_model, gbm_model, pca_x, pca_y, cnn_model, cgan_generator = load_models()
+svm_model, gbm_model, pca_x, pca_y, scaler_x, scaler_y, cnn_model, cgan_generator = load_models()
 
 def apply_watermark_ml_model(cover_image, watermark_image=None, model_type="SVM", alpha=0.3):
     if cover_image is None:
@@ -25,7 +25,9 @@ def apply_watermark_ml_model(cover_image, watermark_image=None, model_type="SVM"
     if input_vec.shape[0] != pca_x.components_.shape[1]:
         raise ValueError(f"Input vector length mismatch for PCA: {input_vec.shape[0]}")
 
-    reduced_input = pca_x.transform([input_vec])
+    # Apply scaler and PCA as done in training
+    scaled_input = scaler_x.transform([input_vec])
+    reduced_input = pca_x.transform(scaled_input)
 
     if model_type == "SVM":
         predicted = svm_model.predict(reduced_input)
@@ -34,7 +36,10 @@ def apply_watermark_ml_model(cover_image, watermark_image=None, model_type="SVM"
     else:
         raise ValueError("Unknown ML model type")
 
-    reconstructed = pca_y.inverse_transform(predicted)[0]
+    # Inverse PCA and scaler for output
+    output_scaled = pca_y.inverse_transform(predicted)
+    reconstructed = scaler_y.inverse_transform(output_scaled)[0]
+
     predicted_image = reconstructed.reshape(64, 64)
 
     mse = np.mean((blended_gt - predicted_image) ** 2)
