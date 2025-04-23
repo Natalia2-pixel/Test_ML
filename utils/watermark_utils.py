@@ -1,6 +1,7 @@
 import numpy as np
 from PIL import Image
 from skimage.metrics import structural_similarity as ssim
+from skimage import exposure
 import tensorflow as tf
 from model_loader import load_models
 
@@ -50,11 +51,15 @@ def apply_watermark_ml_model(cover_image, watermark_image=None, model_type="SVM"
     norm_img = (predicted_image - predicted_image.min()) / (predicted_image.max() - predicted_image.min() + 1e-8)
     output_img = Image.fromarray((norm_img * 255).astype(np.uint8))
 
+    # Also return blended_gt for visualization
+    blended_img = Image.fromarray((blended_gt * 255).astype(np.uint8))
+
     return output_img, {
-    "mse": mse,
-    "psnr": psnr,
-    "ssim": ssim_score
-}
+        "mse": mse,
+        "psnr": psnr,
+        "ssim": ssim_score,
+        "blended_gt": blended_img
+    }
 
 def apply_watermark_dl_model(cover_image, watermark_image=None, model_type="CNN", alpha=0.3):
     if cover_image is None:
@@ -86,12 +91,17 @@ def apply_watermark_dl_model(cover_image, watermark_image=None, model_type="CNN"
     psnr = 10 * np.log10(1.0 / mse)
     ssim_score = ssim(blended_gt, predicted, data_range=1.0)
 
-   # Normalize for better visibility (optional but highly recommended)
+    # Normalize for better visibility
     norm_img = (predicted - predicted.min()) / (predicted.max() - predicted.min() + 1e-8)
     output_img = Image.fromarray((norm_img * 255).astype(np.uint8))
 
+    blended_img = Image.fromarray((blended_gt * 255).astype(np.uint8))
+
     return output_img, {
-        "mse": mse, "psnr": psnr, "ssim": ssim_score
+        "mse": mse,
+        "psnr": psnr,
+        "ssim": ssim_score,
+        "blended_gt": blended_img
     }
 
 def apply_watermark_with_model(model, cover_image, custom_watermark_img=None):
