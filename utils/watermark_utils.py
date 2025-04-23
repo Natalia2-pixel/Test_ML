@@ -46,9 +46,15 @@ def apply_watermark_ml_model(cover_image, watermark_image=None, model_type="SVM"
     psnr = 10 * np.log10(1.0 / mse)
     ssim_score = ssim(blended_gt, predicted_image, data_range=1.0)
 
-    return Image.fromarray((predicted_image * 255).astype(np.uint8)), {
-        "mse": mse, "psnr": psnr, "ssim": ssim_score
-    }
+    # Normalize output image for better visualization
+norm_img = (predicted_image - predicted_image.min()) / (predicted_image.max() - predicted_image.min() + 1e-8)
+output_img = Image.fromarray((norm_img * 255).astype(np.uint8))
+
+return output_img, {
+    "mse": mse,
+    "psnr": psnr,
+    "ssim": ssim_score
+}
 
 def apply_watermark_dl_model(cover_image, watermark_image=None, model_type="CNN", alpha=0.3):
     if cover_image is None:
