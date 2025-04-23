@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 from skimage import exposure  # For histogram equalization
-from utils.watermark_utils import apply_watermark_with_model
+from utils.watermark_utils import apply_watermark_with_model, show_watermark_comparison
 
 # Set page configuration
 st.set_page_config(page_title="🔐 Watermark ML/DL App", layout="centered")
@@ -65,6 +65,9 @@ if uploaded_file and st.button("🚀 Apply Watermark"):
             # Display the watermarked result
             st.subheader("Watermarked Image")
             st.image(watermarked_img, caption=f"Watermarked using {model_choice}", use_container_width=True)
+
+            # Comparison View
+            show_watermark_comparison(cover_image.convert("L").resize((64, 64)), watermarked_img, metrics["blended_gt"])
 
             # Download Button
             buf = BytesIO()
