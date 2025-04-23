@@ -87,8 +87,10 @@ def apply_watermark_dl_model(cover_image, watermark_image=None, model_type="CNN"
     ssim_score = ssim(blended_gt, predicted, data_range=1.0)
 
    # Normalize for better visibility (optional but highly recommended)
-    norm_img = (predicted_image - predicted_image.min()) / (predicted_image.max() - predicted_image.min() + 1e-8)
-    return Image.fromarray((norm_img * 255).astype(np.uint8)), {
+    norm_img = (predicted - predicted.min()) / (predicted.max() - predicted.min() + 1e-8)
+    output_img = Image.fromarray((norm_img * 255).astype(np.uint8))
+
+    return output_img, {
         "mse": mse, "psnr": psnr, "ssim": ssim_score
     }
 
