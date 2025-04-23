@@ -2,9 +2,10 @@ import streamlit as st
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
+from skimage import exposure  # For histogram equalization
 from utils.watermark_utils import apply_watermark_with_model
 
-# Set page configuration first
+# Set page configuration
 st.set_page_config(page_title="🔐 Watermark ML/DL App", layout="centered")
 
 # App Title and Intro
@@ -17,8 +18,8 @@ Select a model and click **Apply Watermark** to view and evaluate results.
 # Sidebar Options
 st.sidebar.title("⚙️ Watermark Options")
 mode = st.sidebar.radio("Choose Mode", ["Pretrained Watermark", "Custom Watermark"])
-model_choice = st.sidebar.selectbox("Choose Model", ["SVM", "GBM", "CNN", "GAN"]) 
-
+model_choice = st.sidebar.selectbox("Choose Model", ["SVM", "GBM", "CNN", "GAN"])
+enhance_output = st.sidebar.checkbox("Enhance Output for Visibility", value=True)
 
 # Upload Image
 uploaded_file = st.file_uploader("Upload a Cover Image", type=["jpg", "jpeg", "png"])
@@ -27,7 +28,7 @@ custom_watermark = None
 
 if uploaded_file:
     cover_image = Image.open(uploaded_file).convert("RGB")
-    st.image(cover_image, caption="Uploaded Cover Image", use_column_width=True)
+    st.image(cover_image, caption="Uploaded Cover Image", use_container_width=True)
 
     if mode == "Custom Watermark":
         watermark_text = st.text_input("Enter Watermark Text", max_chars=20)
@@ -40,7 +41,7 @@ if uploaded_file:
             overlay_preview = cover_image.copy().convert("RGB")
             draw_overlay = ImageDraw.Draw(overlay_preview)
             draw_overlay.text((10, 25), watermark_text, fill=(255, 0, 0), font=font)
-            st.image(overlay_preview, caption="Preview: Text Watermark on Cover", use_column_width=True)
+            st.image(overlay_preview, caption="Preview: Text Watermark on Cover", use_container_width=True)
 
 # Apply Watermark Button
 if uploaded_file and st.button("🚀 Apply Watermark"):
@@ -55,9 +56,15 @@ if uploaded_file and st.button("🚀 Apply Watermark"):
                     custom_watermark_img=custom_watermark
                 )
 
+            # Enhance visibility (if selected)
+            if enhance_output:
+                gray = np.array(watermarked_img.convert("L")) / 255.0
+                equalized = exposure.equalize_hist(gray)
+                watermarked_img = Image.fromarray((equalized * 255).astype(np.uint8))
+
             # Display the watermarked result
             st.subheader("Watermarked Image")
-            st.image(watermarked_img, caption=f"Watermarked using {model_choice}", use_column_width=True)
+            st.image(watermarked_img, caption=f"Watermarked using {model_choice}", use_container_width=True)
 
             # Download Button
             buf = BytesIO()
